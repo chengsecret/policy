@@ -1,0 +1,39 @@
+version: "3"
+
+services:
+  policy-search:
+    restart: always
+    container_name: policy-search
+    image: 10.4.177.111:5000/policy/policy-search
+    environment:
+      NACOS_HOST: 10.4.177.111
+      NACOS_PORT: 8848
+      spring.cloud.nacos.discovery.namespace: cfeacfb9-325b-494e-aa2c-a35ced6247d8
+      spring.cloud.nacos.discovery.config: cfeacfb9-325b-494e-aa2c-a35ced6247d8
+#      spring.cloud.nacos.ip: ###
+    ports:
+      - 8001:8001
+
+  policy-gateway:
+    restart: always
+    container_name: policy-gateway
+    image: 10.4.177.111:5000/policy/policy-gateway
+    environment:
+      NACOS_HOST: 10.4.177.111
+      NACOS_PORT: 8848
+      spring.cloud.nacos.discovery.namespace: cfeacfb9-325b-494e-aa2c-a35ced6247d8
+      spring.cloud.nacos.discovery.config: cfeacfb9-325b-494e-aa2c-a35ced6247d8
+    ports:
+      - 8989:8989
+
+  policy-auth:
+    restart: always
+    container_name: policy-auth
+    image: 10.4.177.111:5000/policy/policy-auth
+    environment:
+      NACOS_HOST: 10.4.177.111
+      NACOS_PORT: 8848
+      spring.cloud.nacos.discovery.namespace: cfeacfb9-325b-494e-aa2c-a35ced6247d8
+      spring.cloud.nacos.discovery.config: cfeacfb9-325b-494e-aa2c-a35ced6247d8
+    ports:
+      - 8002:8002

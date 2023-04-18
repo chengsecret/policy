@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    username: root
+    password: 99998888*
+    url: jdbc:mysql://10.4.177.111:3306/policy?useSSL=false&useUnicode=true&characterEncoding=utf-8
+    driver-class-name: org.gjt.mm.mysql.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    #druid配置
+    initialSize: 5
+    minIdle: 5
+    maxActive: 20
+    maxWait: 60000
+    timeBetweenEvictionRunsMillis: 60000
+    minEvictableIdleTimeMillis: 300000
+    validationQuery: SELECT 1 FROM DUAL
+    testWhileIdle: true
+    testOnBorrow: false
+    testOnReturn: false
+    poolPreparedStatements: true
+    maxPoolPreparedStatementPerConnectionSize: 20
+    filters: stat,wall,log4j
+  elasticsearch:
+    rest:
+      uris: http://10.4.177.111:9200, http://10.4.177.113:9200, http://10.4.177.198:9200
+      username: elastic
+      password: 99998888*
+#      uris: http://8.130.97.26:9200
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:   # 驼峰命名法的自动映射
+    type-aliases-package: site.koisecret.esoperation.entity
+    map-underscore-to-camel-case: true

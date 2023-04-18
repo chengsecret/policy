@@ -1,0 +1,17 @@
+server:
+  port: 8001
+
+spring:
+  application:
+    name:  @artifactId@
+  profiles:
+    active: @profiles.active@
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_HOST:policy-register}:${NACOS_PORT:8848}
+        namespace: 45735c42-3ca3-4f2c-b7a1-64aedd8c1446
+      config:
+        server-addr: ${NACOS_HOST:policy-register}:${NACOS_PORT:8848}
+        file-extension: yml
+        namespace: 45735c42-3ca3-4f2c-b7a1-64aedd8c1446

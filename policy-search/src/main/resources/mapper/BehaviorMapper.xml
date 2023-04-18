@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="site.koisecret.policy.search.mapper.BehaviorMapper">
+    <insert id="addBehavior" parameterType="site.koisecret.policy.search.entity.Behavior">
+        insert into policy.behavior (uid,pid,bid,times)
+        values(#{uid}, #{pid}, #{bid}, #{times})
+    </insert>
+</mapper>

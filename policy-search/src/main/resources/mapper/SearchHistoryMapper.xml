@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="site.koisecret.policy.search.mapper.SearchHistoryMapper">
+    <insert id="addSearchHistory" parameterType="site.koisecret.policy.search.entity.SearchHistory">
+        insert into search_history (uid,category,text,grade,pub_agency,policy_type,province,type,pub_number,start_date,end_date)
+        values(#{uid}, #{category}, #{text}, #{grade}, #{pubAgency}, #{policyType}, #{province}, #{type}, #{pubNumber}, #{startDate}, #{endDate})
+    </insert>
+</mapper>
