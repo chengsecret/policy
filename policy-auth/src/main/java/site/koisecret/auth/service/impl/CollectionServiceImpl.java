@@ -7,8 +7,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import site.koisecret.auth.entity.Behavior;
 import site.koisecret.auth.entity.Collection;
+import site.koisecret.auth.entity.PolicySQL;
 import site.koisecret.auth.mapper.BehaviorMapper;
 import site.koisecret.auth.mapper.CollectionMapper;
+import site.koisecret.auth.mapper.PolicySQLMapper;
 import site.koisecret.auth.service.CollectionService;
 import site.koisecret.commons.Response.Result;
 import site.koisecret.commons.redisKey.RedisKey;
@@ -31,6 +33,8 @@ public class CollectionServiceImpl implements CollectionService {
     private CollectionMapper collectionMapper;
     @Autowired
     private BehaviorMapper behaviorMapper;
+    @Autowired
+    private PolicySQLMapper policySQLMapper;
 
     @Override
     public Result addCollection(Collection collection) {
@@ -40,6 +44,18 @@ public class CollectionServiceImpl implements CollectionService {
         }
 
         if (collectionMapper.addCollection(collection)) {
+
+            PolicySQL policySQL = policySQLMapper.findPolicySQLByPid(collection.getPid());
+            if (policySQL != null) {
+                Integer collectionTimes = policySQL.getColectionTimes();
+                if (null == collectionTimes) {
+                    policySQLMapper.updateCollectionTimes(1, collection.getPid());
+                }else {
+                    policySQLMapper.updateCollectionTimes(collectionTimes + 1, collection.getPid());
+                }
+            }
+
+
             if(Boolean.TRUE.equals(redisTemplate.hasKey(RedisKey.USER_COLLECTION + collection.getUid()))){
                 redisTemplate.delete(RedisKey.USER_COLLECTION + collection.getUid());
             }

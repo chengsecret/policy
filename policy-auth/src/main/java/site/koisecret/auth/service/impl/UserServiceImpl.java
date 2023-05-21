@@ -38,6 +38,11 @@ public class UserServiceImpl implements UserService {
         user.setPhone(phone);
         user.setPassword(password);
         user.setName(name);
+        user.setAge(25);
+        user.setProvince("浙江省");
+        user.setCity("杭州市");
+        user.setIndustry("信息传输、软件和信息技术服务业");
+        user.setProfession("学生");
         if (userMapper.addUser(user)) {
             User userByPhone = userMapper.findUserByPhone(phone);
             HashMap<String, Object> jwtClaims = new HashMap<String, Object>() {{
