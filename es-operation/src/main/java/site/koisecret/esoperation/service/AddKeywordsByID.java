@@ -1,6 +1,7 @@
 package site.koisecret.esoperation.service;
 
 import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvValidationException;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -25,7 +26,7 @@ public class AddKeywordsByID {
     @Autowired
     private RestHighLevelClient restHighLevelClient;
 
-    public void addKeywords() throws IOException {
+    public void addKeywords() throws IOException, CsvValidationException {
         int i = 1;
         List<KeywordDTO> list = readCsvFile();
         for (KeywordDTO keywordDTO : list) {
@@ -48,7 +49,7 @@ public class AddKeywordsByID {
     }
 
 
-    private List<KeywordDTO> readCsvFile() throws IOException {
+    private List<KeywordDTO> readCsvFile() throws IOException, CsvValidationException {
         String csvFilePath = "keyword.csv";
         // 创建CSVReader对象并指定CSV文件路径
         CSVReader reader = new CSVReader(new FileReader(csvFilePath));

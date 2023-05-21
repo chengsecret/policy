@@ -1,6 +1,7 @@
 package site.koisecret.esoperation;
 
 import com.opencsv.CSVWriter;
+import com.opencsv.exceptions.CsvValidationException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,7 +72,7 @@ public class esOperation {
      * 根据policyId传入keyword
      */
     @Test
-    public void addKeyword() throws IOException {
+    public void addKeyword() throws IOException, CsvValidationException {
         addKeywordsByID.addKeywords();
     }
 

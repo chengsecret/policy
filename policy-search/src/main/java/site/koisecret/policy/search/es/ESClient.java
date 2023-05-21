@@ -242,8 +242,8 @@ public class ESClient {
             searchSourceBuilder.query(multiMatchQueryBuilder);
         }
 
-        SearchResponse searchResponse = client.search(new SearchRequest(index).source(searchSourceBuilder), RequestOptions.DEFAULT);
-//        SearchResponse searchResponse = client.search(new SearchRequest(index).source(searchSourceBuilder).preference(String.valueOf(preference)), RequestOptions.DEFAULT);
+//        SearchResponse searchResponse = client.search(new SearchRequest(index).source(searchSourceBuilder), RequestOptions.DEFAULT);
+        SearchResponse searchResponse = client.search(new SearchRequest(index).source(searchSourceBuilder).preference(String.valueOf(preference)), RequestOptions.DEFAULT);
         List<Policy> hits = Arrays.stream(searchResponse.getHits().getHits()).map(
                 searchHit -> BeanUtil.toBean(searchHit.getSourceAsMap(), Policy.class)
         ).collect(Collectors.toList()); //将es结果映射为java的T类型
