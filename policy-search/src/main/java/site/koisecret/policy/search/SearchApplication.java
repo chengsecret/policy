@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.netflix.hystrix.dashboard.EnableHystrixDashboard;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * @author by chengsecret
@@ -15,6 +16,7 @@ import org.springframework.cloud.netflix.hystrix.dashboard.EnableHystrixDashboar
 @SpringBootApplication
 @EnableCircuitBreaker //开启Hystrix
 @EnableHystrixDashboard // 激活仪表盘
+@EnableScheduling //开启基于注解的定时任务
 @MapperScan("site.koisecret.policy.search.mapper")
 public class SearchApplication {
     public static void main(String[] args) {

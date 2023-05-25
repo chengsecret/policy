@@ -197,9 +197,9 @@ public class ConditionServiceImpl implements ConditionService {
 
     private float getWeight(String text) {
         if ("低".equals(text)) {
-            return 0.5f;
+            return 0.1f;
         } else if ("高".equals(text)) {
-            return 1.5f;
+            return 1.9f;
         }else{
             return 1.0f;
         }

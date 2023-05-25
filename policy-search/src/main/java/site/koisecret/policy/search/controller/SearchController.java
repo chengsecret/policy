@@ -81,7 +81,7 @@ public class SearchController {
         params.set("num", 50);  //返回最相近的50条政策
         page.setTotal(50);
 
-        String result = HttpUtil.post(url+"bert_id_search", params.toString());
+        String result = HttpUtil.post(url+"title_id_search", params.toString());
 
         List<Policy> policies = JSONUtil.parseObj(result).getJSONArray("data").toList(Policy.class);
         long offset = page.offset();
@@ -130,7 +130,7 @@ public class SearchController {
             params.set("num", 50);  //返回最相近的50条政策
             page.setTotal(50);
 
-            String result = HttpUtil.post(url+"bert_search", params.toString());
+            String result = HttpUtil.post(url+"title_search", params.toString());
             List<Policy> policies = JSONUtil.parseObj(result).getJSONArray("data").toList(Policy.class);
             long offset = page.offset();
             if (offset < policies.size()) {
@@ -140,8 +140,8 @@ public class SearchController {
                 }
                 page.setRecords(policies);
             }
-//            Result res = Result.SUCCESS().set("page", page);
-            Result res =  smartService.smartSearch(baseSearchDTO, null);
+            Result res = Result.SUCCESS().set("page", page);
+//            Result res =  smartService.smartSearch(baseSearchDTO, null);
             return collectionService.collectionListHaveAuth(uid, res);
         }else {
             Result result = policyService.general(page);

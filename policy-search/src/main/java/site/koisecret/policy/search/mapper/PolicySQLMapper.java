@@ -4,7 +4,10 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Repository;
+import site.koisecret.policy.search.dto.PopularPolicyDTO;
 import site.koisecret.policy.search.entity.PolicySQL;
+
+import java.util.ArrayList;
 
 /**
  * @author by chengsecret
@@ -22,4 +25,7 @@ public interface PolicySQLMapper {
     @Update("update policy set browse_times = #{browseTimes} " +
             "where policy_id=#{policyId}")
     boolean updateBrowseTimes(@Param("browseTimes")Integer browseTimes, @Param("policyId") String policyId);
+
+    @Select("select policy_id, category, colection_times, browse_times from policy ")
+    ArrayList<PopularPolicyDTO> get();
 }
