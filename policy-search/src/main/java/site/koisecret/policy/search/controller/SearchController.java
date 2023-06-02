@@ -9,6 +9,7 @@ import lombok.SneakyThrows;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,7 +25,6 @@ import site.koisecret.policy.search.entity.SearchHistory;
 import site.koisecret.policy.search.mapper.SearchHistoryMapper;
 import site.koisecret.policy.search.service.CollectionService;
 import site.koisecret.policy.search.service.PolicyService;
-import site.koisecret.policy.search.service.SmartService;
 
 import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -34,6 +34,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  * @date 2023/3/28.
  */
 @RestController
+@RefreshScope
 public class SearchController {
 
     @Autowired
@@ -44,9 +45,6 @@ public class SearchController {
     private ThreadPoolExecutor threadPoolExecutor;
     @Autowired
     private SearchHistoryMapper searchHistoryMapper;
-    @Autowired
-    private SmartService smartService;
-
     @Value("${anns.similar.url}")
     private String url;
 

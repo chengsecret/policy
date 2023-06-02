@@ -1,10 +1,15 @@
 package site.koisecret.policy.search.service.impl;
 
+import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import site.koisecret.commons.Response.Page;
@@ -30,6 +35,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 @Service
 @Slf4j
+@RefreshScope
 public class SmartServiceImpl implements SmartService {
     @Autowired
     private ThreadPoolExecutor threadPoolExecutor;
@@ -39,6 +45,8 @@ public class SmartServiceImpl implements SmartService {
     private ESClient client;
     @Autowired
     private RedisTemplate redisTemplate;
+    @Value("${anns.similar.url}")
+    private String url;
 
     @Override
     public Result smartSearch(BaseSearchDTO baseSearchDTO, String token) throws IOException {
@@ -72,6 +80,26 @@ public class SmartServiceImpl implements SmartService {
         Page<Policy> page = new Page<>();
         page.setCurrent(baseSearchDTO.getCurrent());
         page.setSize(baseSearchDTO.getSize());
+
+
+        if (null != baseSearchDTO.getText() && baseSearchDTO.getText().length() > 20) {
+            JSONObject params = JSONUtil.createObj();
+            params.set("target", baseSearchDTO.getText());
+            params.set("num", 50);  //返回最相近的50条政策
+            page.setTotal(50);
+
+            String result = HttpUtil.post(url+"title_search", params.toString());
+            List<Policy> policies = JSONUtil.parseObj(result).getJSONArray("data").toList(Policy.class);
+            long offset = page.offset();
+            if (offset < policies.size()) {
+                policies =  policies.subList((int) offset, (int) Math.min(offset + page.getSize(), policies.size()));
+                for (Policy policy : policies) {
+                    policy.setPolicyId(String.valueOf((int) (Float.parseFloat(policy.getPolicyId()))));
+                }
+                page.setRecords(policies);
+            }
+            return Result.SUCCESS().set("page", page);
+        }
 
         String[] index = {ESIndexConstants.POLICY_INDEX};
         String[] fields = null;

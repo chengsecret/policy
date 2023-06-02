@@ -26,4 +26,8 @@ public interface BehaviorMapper {
             "where id = #{id}")
     boolean updateBehavior(Behavior behavior);
 
+    // 查找用户最近搜素的一条的政策id
+    @Select("select pid from behavior where uid=#{uid} ORDER BY gmt_modified DESC LIMIT 0,1 ")
+    String findPid(int uid);
+
 }
