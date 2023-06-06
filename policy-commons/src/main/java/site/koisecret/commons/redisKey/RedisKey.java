@@ -26,4 +26,6 @@ public class RedisKey {
 
     public static final String POLICY_POPULAR = "policy_popular"; //政策流行度排序
 
+    public static final String POLICY_RECOMMEND = "policy_recommend"; //推荐
+
 }

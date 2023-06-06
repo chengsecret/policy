@@ -26,11 +26,13 @@ import site.koisecret.policy.search.mapper.BehaviorMapper;
 import site.koisecret.policy.search.service.CollectionService;
 import site.koisecret.policy.search.service.impl.PolicyPopularScheduledService;
 
+import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author by chengsecret
@@ -41,6 +43,8 @@ import java.util.concurrent.CompletableFuture;
 public class RecommendController {
     @Autowired
     private RedisTemplate redisTemplate;
+    @Autowired
+    private ThreadPoolExecutor threadPoolExecutor;
     @Autowired
     private PolicyPopularScheduledService policyPopularScheduledService;
     @Autowired
@@ -105,7 +109,7 @@ public class RecommendController {
         page.setCurrent(0);
         page.setSize(15);
         String[] index = {ESIndexConstants.POLICY_INDEX};
-
+//        System.out.println(token + "------");
         if (StringUtils.isBlank(token)) {
             //用户未登录
             List<PopularPolicyDTO> policyDTOS = (List<PopularPolicyDTO>) redisTemplate.opsForValue().get(RedisKey.POLICY_POPULAR);
@@ -117,51 +121,12 @@ public class RecommendController {
                 pids.add(popularPolicyDTO.getPolicyId());
             }
             return client.getPoliciesByIds("uid", page, pids, index, Policy.class);
-        }else {
-            //用户已登录
-            try {
-                Claims claims = JWTUtils.parseJWT(token);
-                String uid = claims.get("uid").toString();
+        }else { //用户已登录
 
-                // 异步执行 calculate1()
-                CompletableFuture<Vector<String>> future1 = CompletableFuture.supplyAsync(() -> {
-                    //根据用户的搜索记录进行推荐
-                    Vector<String> policyIds = new Vector<>();
-                    String pid = behaviorMapper.findPid(Integer.parseInt(uid));
-                    if (StringUtils.isNotBlank(pid)) {
-                        JSONObject params = JSONUtil.createObj();
-                        params.set("target",Integer.parseInt(pid));
-                        params.set("num", 5);  //返回最相近的3条政策
-                        String result = HttpUtil.post(url+"title_id_search", params.toString());
-                        List<Policy> policies = JSONUtil.parseObj(result).getJSONArray("data").toList(Policy.class);
-                        for (Policy policy : policies) {
-                            policyIds.add(policy.getPolicyId().replace(".0",""));
-                        }
-                    }
-                    return policyIds;
-                });
-
-                // 异步执行 calculate2()
-                CompletableFuture<Vector<String>> future2 = CompletableFuture.supplyAsync(() -> {
-                    JSONObject params1 = JSONUtil.createObj();
-                    params1.set("userId",Integer.parseInt(uid));
-                    String result = HttpUtil.post(urlForRecommend+"recommend/recommend", params1.toString());
-                    List<String> ids = JSONUtil.parseObj(result).getJSONArray("data").toList(String.class);
-                    return new Vector<String>(ids.subList(0, 12));
-                });
-
-                // 等待两个计算结果完成，并进行相加
-                CompletableFuture<Vector<String>> combinedFuture = future1.thenCombine(future2, (res1, res2) -> {
-                    res1.addAll(res2);
-                    return res1;
-                });
-                pids = combinedFuture.get();
-                Collections.shuffle(pids);
-                Result res = client.getPoliciesByIds(uid, page, pids, index, Policy.class);
-                return collectionService.collectionList(token,res);
-
-            } catch (Exception e) {
-                //相当于用户未登录
+            //1.去redis查推荐信息，没有就按流行度   返回结果
+            //2.异步执行，将推荐内容存入redis
+            Result result = (Result) redisTemplate.opsForValue().get(RedisKey.POLICY_RECOMMEND + token);
+            if (null == result) {
                 List<PopularPolicyDTO> policyDTOS = (List<PopularPolicyDTO>) redisTemplate.opsForValue().get(RedisKey.POLICY_POPULAR);
                 if (null == policyDTOS) {
                     policyDTOS = policyPopularScheduledService.sortPopularPolicy();
@@ -170,8 +135,96 @@ public class RecommendController {
                 for (PopularPolicyDTO popularPolicyDTO : policyDTOS.subList(0, 15)) {
                     pids.add(popularPolicyDTO.getPolicyId());
                 }
-                return client.getPoliciesByIds("uid", page, pids, index, Policy.class);
+                result =  client.getPoliciesByIds("uid", page, pids, index, Policy.class);
             }
+            threadPoolExecutor.execute(() -> {
+                Claims claims = JWTUtils.parseJWT(token);
+                String uid = claims.get("uid").toString();
+
+                String pid = behaviorMapper.findPid(Integer.parseInt(uid));
+                if (StringUtils.isNotBlank(pid)) {
+                    JSONObject params = JSONUtil.createObj();
+                    params.set("target",Integer.parseInt(pid));
+                    params.set("num", 5);  //返回最相近的3条政策
+                    String res = HttpUtil.post(url+"title_id_search", params.toString());
+                    List<Policy> policies = JSONUtil.parseObj(res).getJSONArray("data").toList(Policy.class);
+                    for (Policy policy : policies) {
+                        pids.add(policy.getPolicyId().replace(".0",""));
+                    }
+                }
+                JSONObject params1 = JSONUtil.createObj();
+                params1.set("userId",Integer.parseInt(uid));
+                String res = HttpUtil.post(urlForRecommend+"recommend/recommend", params1.toString());
+                List<String> ids = JSONUtil.parseObj(res).getJSONArray("data").toList(String.class);
+                pids.addAll(ids);
+                Collections.shuffle(pids);
+                Result result1 = null;
+                try {
+                    result1 = client.getPoliciesByIds(uid, page, pids, index, Policy.class);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                Result result2 = collectionService.collectionList(token, result1);
+                redisTemplate.opsForValue().set(RedisKey.POLICY_RECOMMEND + token, result2, Duration.ofDays(7));
+            });
+
+            return result;
+
+
+            //用户已登录
+//            try {
+//                Claims claims = JWTUtils.parseJWT(token);
+//                String uid = claims.get("uid").toString();
+//
+//                // 异步执行 calculate1()
+//                CompletableFuture<Vector<String>> future1 = CompletableFuture.supplyAsync(() -> {
+//                    //根据用户的搜索记录进行推荐
+//                    Vector<String> policyIds = new Vector<>();
+//                    String pid = behaviorMapper.findPid(Integer.parseInt(uid));
+//                    if (StringUtils.isNotBlank(pid)) {
+//                        JSONObject params = JSONUtil.createObj();
+//                        params.set("target",Integer.parseInt(pid));
+//                        params.set("num", 5);  //返回最相近的3条政策
+//                        String result = HttpUtil.post(url+"title_id_search", params.toString());
+//                        List<Policy> policies = JSONUtil.parseObj(result).getJSONArray("data").toList(Policy.class);
+//                        for (Policy policy : policies) {
+//                            policyIds.add(policy.getPolicyId().replace(".0",""));
+//                        }
+//                    }
+//                    return policyIds;
+//                });
+//
+//                // 异步执行 calculate2()
+//                CompletableFuture<Vector<String>> future2 = CompletableFuture.supplyAsync(() -> {
+//                    JSONObject params1 = JSONUtil.createObj();
+//                    params1.set("userId",Integer.parseInt(uid));
+//                    String result = HttpUtil.post(urlForRecommend+"recommend/recommend", params1.toString());
+//                    List<String> ids = JSONUtil.parseObj(result).getJSONArray("data").toList(String.class);
+//                    return new Vector<String>(ids.subList(0, 12));
+//                });
+//
+//                // 等待两个计算结果完成，并进行相加
+//                CompletableFuture<Vector<String>> combinedFuture = future1.thenCombine(future2, (res1, res2) -> {
+//                    res1.addAll(res2);
+//                    return res1;
+//                });
+//                pids = combinedFuture.get();
+//                Collections.shuffle(pids);
+//                Result res = client.getPoliciesByIds(uid, page, pids, index, Policy.class);
+//                return collectionService.collectionList(token,res);
+//
+//            } catch (Exception e) {
+//                //相当于用户未登录
+//                List<PopularPolicyDTO> policyDTOS = (List<PopularPolicyDTO>) redisTemplate.opsForValue().get(RedisKey.POLICY_POPULAR);
+//                if (null == policyDTOS) {
+//                    policyDTOS = policyPopularScheduledService.sortPopularPolicy();
+//                }
+//
+//                for (PopularPolicyDTO popularPolicyDTO : policyDTOS.subList(0, 15)) {
+//                    pids.add(popularPolicyDTO.getPolicyId());
+//                }
+//                return client.getPoliciesByIds("uid", page, pids, index, Policy.class);
+//            }
         }
 
     }
